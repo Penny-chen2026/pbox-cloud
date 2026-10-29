@@ -1,0 +1,8 @@
+{
+  "name": "pbox-cloud-api",
+  "version": "1.0.0",
+  "description": "Tiny open/close state server for the PBOX ESP32 phone box",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}
