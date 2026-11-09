@@ -21,6 +21,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const pboxSync = require('./pbox-sync');
 
 const PORT = process.env.PORT || 3000;
 const KEY = process.env.PBOX_KEY || '';
@@ -176,6 +177,8 @@ const server = http.createServer(function (req, res) {
   const u = new URL(req.url, 'http://x'), p = u.pathname;
 
   if (req.method === 'OPTIONS') return send(res, 204, '');
+  
+  if (pboxSync.handle(req, res, u, p, { getSession: getSession, send: send, readBody: readBody, dataDir: DATA_DIR })) return;
 
   if (req.method === 'GET' && p === '/status') {
     deviceLastSeen = Date.now();
@@ -206,8 +209,8 @@ const server = http.createServer(function (req, res) {
       let j = {};
       try { j = JSON.parse(body); } catch (e) { return send(res, 400, JSON.stringify({ error: 'bad JSON' })); }
       if (!CLIENT_ID) return send(res, 503, JSON.stringify({ error: 'PBOX_CLIENT_ID is not set on the server' }));
-      if (!j.idToken || typeof j.idToken !== 'string' || j.idToken.length > 4096) return send(res, 400, JSON.stringify({ error: 'idToken missing' }));
-      verifyGoogleToken(j.idToken).then(function (g) {
+      if (!j.access_token && (!j.idToken || typeof j.idToken !== 'string' || j.idToken.length > 4096)) return send(res, 400, JSON.stringify({ error: 'token missing' }));
+   (j.access_token ? pboxSync.verifyAccessToken(String(j.access_token), CLIENT_ID) : verifyGoogleToken(j.idToken)).then(function (g) {
         const token = crypto.randomBytes(24).toString('base64url');
         sessions.set(token, { sub: g.sub, email: g.email, createdAt: Date.now(), lastSeen: Date.now() });
         saveSessions();
