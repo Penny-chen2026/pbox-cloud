@@ -178,7 +178,7 @@ const server = http.createServer(function (req, res) {
 
   if (req.method === 'OPTIONS') return send(res, 204, '');
   
-  if (pboxSync.handle(req, res, u, p, { getSession: getSession, send: send, readBody: readBody, dataDir: DATA_DIR })) return;
+  if (pboxSync.handle(req, res, u, p, { getSession: getSession, send: send, readBody: readBody, dataDir: DATA_DIR, canControl: canControl, makeSession: function (sub, email) { const token = crypto.randomBytes(24).toString('base64url'); sessions.set(token, { sub: sub, email: email, createdAt: Date.now(), lastSeen: Date.now() }); saveSessions(); return token; } })) return;
 
   if (req.method === 'GET' && p === '/status') {
     deviceLastSeen = Date.now();
